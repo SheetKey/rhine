@@ -1,38 +1,45 @@
 {
-  description = "rhine";
-  nixConfig.bash-prompt = "\[rhine\]$ ";
+  description = "A Haskell project template.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
-
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
-
-    haskell-flake-utils = {
-      url = "github:ivanovs-4/haskell-flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
   };
 
-outputs = { self, nixpkgs, flake-utils, haskell-flake-utils, flake-compat, ... }:
-  haskell-flake-utils.lib.simpleCabalProject2flake {
-    inherit self nixpkgs;
+  outputs = { self, nixpkgs, flake-utils }: 
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
 
-    systems = [
-      # Tested in CI
-      "x86_64-linux"
-      "x86_64-darwin"
-      # Tested by maintainers
-      "aarch64-darwin"
-      # Not sure we can test this in CI
-      "i686-linux"
-    ];
+        haskellPackages = pkgs.haskellPackages;
 
-    name = "rhine";
-    packageNames = [ "rhine-gloss" "rhine-terminal" "rhine-examples" ];
-  };
+        packageName = "rhine";
+
+        jailbreakUnbreak = pkg:
+          pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
+
+      in {
+        packages.${packageName} = # (ref:haskell-package-def)
+          haskellPackages.callCabal2nix packageName self rec {
+            # Dependency overrides go here
+            # Ex with gi-gtk-declarative:
+            # If version is broken then:
+            # gi-gtk-declarative = jailbreakUnbreak haskeppPackages.gi-gtk-declarative;
+            # or if tests failing: 
+            # gi-gtk-declarative = pkgs.haskell.lib.dontCheck haskellPackages.gi-gtk-declarative;
+          };
+
+        defaultPackage = self.packages.${system}.${packageName};
+
+        devShell = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            ghc
+            cabal-install
+            haskell-language-server
+            haskellPackages.implicit-hie
+          ];
+          inputsFrom = builtins.attrValues self.packages.${system};
+        };
+      }
+    );
 }
