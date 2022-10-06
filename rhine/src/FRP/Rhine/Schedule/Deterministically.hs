@@ -7,15 +7,8 @@ module FRP.Rhine.Schedule.Deterministically where
 import FRP.Rhine.Clock
 import FRP.Rhine.Schedule
 
-
-duplicateDualTick :: Monad m
-                  => MSF m () (time, Either (Either a b) c)
-                  -> MSF m () (time, Either (Either a b) (Either a c))
-duplicateDualTick runningClock = concatS $ runningClock >>> arr dupA
-  where
-    dupA (time, Left (Left  a)) = [ (time, Left (Left a)), (time, Right (Left a)) ]
-    dupA (time, Left (Right b)) = [ (time, Left (Right b)) ]
-    dupA (time, Right c)        = [ (time, Right (Right c)) ]
+-- dunai
+import Data.MonadicStreamFunction.Async
 
 
 
@@ -28,24 +21,35 @@ schedDualPar sched = Schedule $ \parab parac -> do
   return (duplicateDualTick runningClock, initTime)
 
 
-schedSeqParLeft
-  :: Monad m
-  => 
-  -> Schedule m (ParClock m cla clb) (SeqClock m (ParClock m cla clc) (ParClock m cla cld))
-schedSeqParLeft sched = Schedule $ \par seq -> do
-  let cla = parallelCl1 par
-      clb = parallelCl2 par
-      clc = parallelCl2 $ sequentialCl1 seq
-      cld = parallelCl2 $ sequentialCl2 seq
-  (runningClock, initTime) <- initSchedule concurrently clb seq
-  return (duplicateMyTick runningClock, initTime)
+schedParLeftSeq
+  :: (Monad m
+     , Time cla ~ Time clb
+     )
+  => Schedule m clb (SeqClock m (ParClock m cla clc) cld)
+  -> Schedule m (ParClock m cla clb) (SeqClock m (ParClock m cla clc) cld)
+schedParLeftSeq sched = Schedule $ \par seq -> do
+  let clb = parallelCl2 par
+  (runningClock, initTime) <- (initSchedule sched) clb seq
+  return (duplicateLeftCla runningClock, initTime)
 
-duplicateMyTick
-  :: Monad m
-  => MSF m () (time, Either b (Either (Either a c) (Either a d)))
-  -> MSF m () (time, Either (Either a b) (Either (Either a c) (Either a d)))
-duplicatedMyTick runningClock = concatS $ runningClock >>> arr dupA
+
+duplicateDualTick :: Monad m
+                  => MSF m () (time, Either (Either a b) c)
+                  -> MSF m () (time, Either (Either a b) (Either a c))
+duplicateDualTick runningClock = concatS $ runningClock >>> arr dupA
   where
-    dupA (time, Right (Left (Left a))) = [ (time, Left (Left a)), (time, (Right, Left (Left a))) ]
+    dupA (time, Left (Left  a)) = [ (time, Left (Left a)), (time, Right (Left a)) ]
+    dupA (time, Left (Right b)) = [ (time, Left (Right b)) ]
+    dupA (time, Right c)        = [ (time, Right (Right c)) ]
+
+
+duplicateLeftCla
+  :: Monad m
+  => MSF m () (time, Either b (Either (Either a c) d))
+  -> MSF m () (time, Either (Either a b) (Either (Either a c) d))
+duplicateLeftCla runningClock = concatS $ runningClock >>> arr dupA
+  where
     dupA (time, Left b) = [ (time, Left (Right b)) ]
-    dupA x = [ x ]
+    dupA (time, Right (Left (Left a))) = [ (time, Left (Left a)), (time, Right (Left (Left a))) ]
+    dupA (time, Right x) = [ (time, Right x) ]
+
