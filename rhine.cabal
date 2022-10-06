@@ -86,6 +86,7 @@ library
     FRP.Rhine.Schedule
     FRP.Rhine.Schedule.Concurrently
     FRP.Rhine.Schedule.Trans
+    FRP.Rhine.Schedule.Deterministically
     FRP.Rhine.SN
     FRP.Rhine.SN.Combinators
     FRP.Rhine.Type
