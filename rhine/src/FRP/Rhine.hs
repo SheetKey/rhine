@@ -31,6 +31,7 @@ import FRP.Rhine.Schedule                 as X
 import FRP.Rhine.SN                       as X
 import FRP.Rhine.SN.Combinators           as X
 import FRP.Rhine.Type                     as X
+import FRP.Rhine.Type.Except              as X
 
 -- rhine (components)
 import FRP.Rhine.Clock.FixedStep as X

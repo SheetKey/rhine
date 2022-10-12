@@ -89,6 +89,7 @@ library
     FRP.Rhine.SN
     FRP.Rhine.SN.Combinators
     FRP.Rhine.Type
+    FRP.Rhine.Type.Except
 
   other-modules:
     FRP.Rhine.ClSF.Random.Util
