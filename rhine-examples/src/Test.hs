@@ -32,3 +32,6 @@ combine
   => Rhine IO (SeqClock IO (ParClock IO cla clb) (SeqClock IO (ParClock IO cla clc) (ParClock IO cla cld))) a b
 combine = test1 >-- fifoUnbounded -@- schedParLeftSeq concurrently -->
           (test2 >-- fifoUnbounded -@- schedDualPar    concurrently --> test3)
+
+main :: IO ()
+main = print 5

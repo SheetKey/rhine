@@ -90,6 +90,7 @@ library
     FRP.Rhine.SN
     FRP.Rhine.SN.Combinators
     FRP.Rhine.Type
+    FRP.Rhine.Type.Except
 
   other-modules:
     FRP.Rhine.ClSF.Random.Util
@@ -137,13 +138,14 @@ executable InjectionClock
   default-language:    Haskell2010
   if flag(dev)
     ghc-options: -Werror
-
-executable Test
+    
+executable RhineExcept
   hs-source-dirs:      rhine-examples/src
-  main-is:             Test.hs
+  main-is:             RhineExcept.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base         >= 4.9 && < 5
                      , rhine        == 0.8.0.1
+                     , transformers >= 0.5
   default-language:    Haskell2010
   if flag(dev)
     ghc-options: -Werror
